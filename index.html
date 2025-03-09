@@ -1083,882 +1083,439 @@ Replace "rename" with your desired container name.
         <span class="separator">|</span>
         <span class="about-link" onclick="openAboutModal()">About</span>
     </div>
-        </div>
-    <script>
-    	    // Example of using Firebase in your existing code
-    const app = window.firebaseApp;
-    const analytics = window.firebaseAnalytics;
-    
-    // Your existing functionality code
-        let selectedEngine = 'Google';
+</div>
+<script>
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyCmUPSQHLABZ2fI1LcUSEdB-6E9YssCABg",
+        authDomain: "claverpages.firebaseapp.com",
+        projectId: "claverpages",
+        storageBucket: "claverpages.firebasestorage.app",
+        messagingSenderId: "148787266143",
+        appId: "1:148787266143:web:62724e5086e0db5ff411ea",
+        measurementId: "G-XW58K4MRG5"
+    };
 
-        function handleSearch(event) {
-            if (event.key === 'Enter') {
-                const query = document.getElementById("searchInput").value;
-                if (query) {
-                    const engines = {
-                        'Google': 'https://www.google.com/search?q=',
-                        'Bing': 'https://www.bing.com/search?q=',
-                        'DuckDuckGo': 'https://duckduckgo.com/?q=',
-                        'Brave': 'https://search.brave.com/search?q=',
-                        'Startpage': 'https://www.startpage.com/do/search?q='
-                    };
-                    
-                    const searchContainer = document.getElementById("searchContainer");
-                    searchContainer.style.transform = "scale(0.95)";
-                    searchContainer.style.opacity = "0";
-                    
-                    setTimeout(() => {
-                        window.location.href = engines[selectedEngine] + encodeURIComponent(query);
-                    }, 300);
-                }
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Global variables
+    let selectedEngine = 'Google';
+    let currentEditCategory = '';
+    let currentShortcuts = {};
+
+    // Toast notification system
+    function showToast(message, isError = false) {
+        const toast = document.createElement('div');
+        toast.className = `toast ${isError ? 'error' : ''}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Search functionality
+    function handleSearch(event) {
+        if (event.key === 'Enter') {
+            const query = document.getElementById("searchInput").value;
+            if (query) {
+                const engines = {
+                    'Google': 'https://www.google.com/search?q=',
+                    'Bing': 'https://www.bing.com/search?q=',
+                    'DuckDuckGo': 'https://duckduckgo.com/?q=',
+                    'Brave': 'https://search.brave.com/search?q=',
+                    'Startpage': 'https://www.startpage.com/do/search?q='
+                };
+
+                const searchContainer = document.getElementById("searchContainer");
+                searchContainer.style.transform = "scale(0.95)";
+                searchContainer.style.opacity = "0";
+
+                setTimeout(() => {
+                    window.location.href = engines[selectedEngine] + encodeURIComponent(query);
+                }, 300);
             }
         }
+    }
 
-        function animateSearchBar() {
-            document.getElementById("googleTitle").style.transform = "translateY(-20px)";
-            document.getElementById("searchContainer").style.transform = "translateY(-60px)";
-            document.getElementById("helloText").style.opacity = "0";
-            document.getElementById("blurBgSearch").style.display = "block";
-            setTimeout(() => {
-                document.getElementById("blurBgSearch").classList.add("active");
-            }, 10);
-            document.getElementById("searchContainer").style.zIndex = "3";
-            document.getElementById("searchContainer").style.boxShadow = "0px 8px 20px rgba(255, 255, 255, 0.15)";
+    // Animate search bar on focus
+    function animateSearchBar() {
+        document.getElementById("googleTitle").style.transform = "translateY(-20px)";
+        document.getElementById("searchContainer").style.transform = "translateY(-60px)";
+        document.getElementById("helloText").style.opacity = "0";
+        document.getElementById("blurBgSearch").style.display = "block";
+        setTimeout(() => {
+            document.getElementById("blurBgSearch").classList.add("active");
+        }, 10);
+        document.getElementById("searchContainer").style.zIndex = "3";
+        document.getElementById("searchContainer").style.boxShadow = "0px 8px 20px rgba(255, 255, 255, 0.15)";
 
-            const wrappers = document.querySelectorAll('.wrapper');
-            wrappers.forEach(wrapper => {
-                wrapper.style.opacity = "0.5";
-                wrapper.style.transform = "translateY(-30px)";
-                wrapper.style.transition = "all var(--animation-timing) ease-in-out";
-            });
-        }
+        const wrappers = document.querySelectorAll('.wrapper');
+        wrappers.forEach(wrapper => {
+            wrapper.style.opacity = "0.5";
+            wrapper.style.transform = "translateY(-30px)";
+            wrapper.style.transition = "all var(--animation-timing) ease-in-out";
+        });
+    }
 
-        function toggleSearchOptions() {
-            const options = document.getElementById("searchOptions");
-            const title = document.getElementById("googleTitle");
-            const blurBg = document.getElementById("blurBgTitle");
-    
-            if (options.classList.contains("active")) {
-                resetView();
-            } else {
-                title.style.transform = "scale(1.1)";
-                options.style.display = "flex";
-                blurBg.style.display = "block";
-               
-                setTimeout(() => {
-                    options.classList.add("active");
-                    blurBg.classList.add("active");
-                }, 10);
-                
-                document.getElementById("searchContainer").style.opacity = "0.5";
+    // Toggle search engine options
+    function toggleSearchOptions() {
+        const options = document.getElementById("searchOptions");
+        const title = document.getElementById("googleTitle");
+        const blurBg = document.getElementById("blurBgTitle");
 
-                const wrappers = document.querySelectorAll('.wrapper');
-                wrappers.forEach(wrapper => {
-                    wrapper.style.opacity = "0.5";
-                });
-            }
-        }
-        function setSearchEngine(engine) {
-            selectedEngine = engine;
-            const title = document.getElementById("googleTitle");
-            
-            title.style.transform = "scale(0.9)";
-            title.style.opacity = "0";
-            
-            setTimeout(() => {
-                title.textContent = engine;
-                title.style.transform = "scale(1.1)";
-                title.style.opacity = "1";
-                
-                setTimeout(() => {
-                    title.style.transform = "scale(1)";
-                }, 150);
-            }, 150);
-            
+        if (options.classList.contains("active")) {
             resetView();
-        }
-
-function openModal(type) {
-    const modal = document.getElementById('shortcut-modal');
-    const modalTitle = document.getElementById('modal-title');
-    const modalGrid = document.getElementById('modal-grid');
-    const container = document.getElementById(`${type}-container`);
-
-    modalGrid.innerHTML = '';
-    modalTitle.textContent = type.charAt(0).toUpperCase() + type.slice(1);
-    
-    // No edit button inside modal anymore
-    
-    const fragment = document.createDocumentFragment();
-    const shortcuts = container.querySelectorAll('.shortcut');
-
-    shortcuts.forEach((shortcut, index) => {
-        const clone = shortcut.cloneNode(true);
-        clone.style.animationDelay = `${index * 0.05}s`;
-        fragment.appendChild(clone);
-    });
-
-    modalGrid.appendChild(fragment);
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-    document.getElementById('container').style.filter = 'blur(5px)';
-    
-    // Show floating edit button
-    showFloatingEditButton(type);
-}
-
-        function closeModal() {
-            const modal = document.getElementById('shortcut-modal');
-            modal.classList.remove('active');
-            document.body.style.overflow = '';
-            
-            document.getElementById('container').style.filter = 'none';
-        }
-
-        document.getElementById('shortcut-modal').addEventListener('click', function(e) {
-            if (e.target === this || e.target.classList.contains('modal-backdrop')) {
-                closeModal();
-            }
-        });
-
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('container').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('container').style.opacity = '1';
-            }, 100);
-        });
-        function animateSearchBar() {
-            const searchContainer = document.getElementById("searchContainer");
-            const blurBg = document.getElementById("blurBgSearch");
-            
-            document.getElementById("googleTitle").style.transform = "translateY(-20px)";
-            searchContainer.style.transform = "translateY(-60px)";
-            document.getElementById("helloText").style.opacity = "0";
-            
+        } else {
+            title.style.transform = "scale(1.1)";
+            options.style.display = "flex";
             blurBg.style.display = "block";
+
             setTimeout(() => {
+                options.classList.add("active");
                 blurBg.classList.add("active");
             }, 10);
 
-            searchContainer.style.zIndex = "10";
-            searchContainer.style.boxShadow = "0px 8px 20px rgba(255, 255, 255, 0.15)";
-            
+            document.getElementById("searchContainer").style.opacity = "0.5";
+
             const wrappers = document.querySelectorAll('.wrapper');
             wrappers.forEach(wrapper => {
                 wrapper.style.opacity = "0.5";
-                wrapper.style.transform = "translateY(-30px)";
             });
         }
+    }
 
-        function resetView() {
-            const options = document.getElementById("searchOptions");
-            const title = document.getElementById("googleTitle");
-            const searchContainer = document.getElementById("searchContainer");
-            
-            title.style.transform = "translateY(0) scale(1)";
-            
-            searchContainer.style.transform = "translateY(0)";
-            searchContainer.style.zIndex = "1";
-            document.getElementById("helloText").style.opacity = "1";
-            
-            options.classList.remove("active");
-            document.getElementById("blurBgSearch").classList.remove("active");
-            document.getElementById("blurBgTitle").classList.remove("active");
-            
-            const wrappers = document.querySelectorAll('.wrapper');
-            wrappers.forEach(wrapper => {
-                wrapper.style.opacity = "1";
-                wrapper.style.transform = "translateY(0)";
-                wrapper.style.pointerEvents = "auto";
-            });
-            
+    // Set search engine
+    function setSearchEngine(engine) {
+        selectedEngine = engine;
+        const title = document.getElementById("googleTitle");
+
+        title.style.transform = "scale(0.9)";
+        title.style.opacity = "0";
+
+        setTimeout(() => {
+            title.textContent = engine;
+            title.style.transform = "scale(1.1)";
+            title.style.opacity = "1";
+
             setTimeout(() => {
-                document.getElementById("blurBgSearch").style.display = "none";
-                document.getElementById("blurBgTitle").style.display = "none";
-                options.style.display = "none";
-                searchContainer.style.opacity = "1";
-                searchContainer.style.boxShadow = "0px 4px 10px rgba(255, 255, 255, 0.1)";
+                title.style.transform = "scale(1)";
+            }, 150);
+        }, 150);
+
+        resetView();
+    }
+
+    // Reset view after search or options
+    function resetView() {
+        const options = document.getElementById("searchOptions");
+        const title = document.getElementById("googleTitle");
+        const searchContainer = document.getElementById("searchContainer");
+
+        title.style.transform = "translateY(0) scale(1)";
+        searchContainer.style.transform = "translateY(0)";
+        searchContainer.style.zIndex = "1";
+        document.getElementById("helloText").style.opacity = "1";
+
+        options.classList.remove("active");
+        document.getElementById("blurBgSearch").classList.remove("active");
+        document.getElementById("blurBgTitle").classList.remove("active");
+
+        const wrappers = document.querySelectorAll('.wrapper');
+        wrappers.forEach(wrapper => {
+            wrapper.style.opacity = "1";
+            wrapper.style.transform = "translateY(0)";
+            wrapper.style.pointerEvents = "auto";
+        });
+
+        setTimeout(() => {
+            document.getElementById("blurBgSearch").style.display = "none";
+            document.getElementById("blurBgTitle").style.display = "none";
+            options.style.display = "none";
+            searchContainer.style.opacity = "1";
+            searchContainer.style.boxShadow = "0px 4px 10px rgba(255, 255, 255, 0.1)";
+        }, 300);
+    }
+
+    // Open modal for shortcuts
+    function openModal(type) {
+        const modal = document.getElementById('shortcut-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalGrid = document.getElementById('modal-grid');
+        const container = document.getElementById(`${type}-container`);
+
+        modalGrid.innerHTML = '';
+        modalTitle.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+
+        const fragment = document.createDocumentFragment();
+        const shortcuts = container.querySelectorAll('.shortcut');
+
+        shortcuts.forEach((shortcut, index) => {
+            const clone = shortcut.cloneNode(true);
+            clone.style.animationDelay = `${index * 0.05}s`;
+            fragment.appendChild(clone);
+        });
+
+        modalGrid.appendChild(fragment);
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('container').style.filter = 'blur(5px)';
+
+        // Show floating edit button
+        showFloatingEditButton(type);
+    }
+
+    // Close modal
+    function closeModal() {
+        const modal = document.getElementById('shortcut-modal');
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+        document.getElementById('container').style.filter = 'none';
+
+        // Remove floating edit button
+        const editBtn = document.querySelector('.floating-edit-btn');
+        if (editBtn) {
+            editBtn.classList.remove('show');
+            setTimeout(() => {
+                editBtn.remove();
             }, 300);
         }
+    }
 
-        document.addEventListener('click', (e) => {
-            const searchContainer = document.getElementById("searchContainer");
-            const searchInput = document.getElementById("searchInput");
-            const searchBg = document.getElementById("blurBgSearch");
-            
-            if (!searchContainer.contains(e.target) && 
-                !searchInput.contains(e.target) && 
-                searchBg.classList.contains("active")) {
-                
-                document.getElementById("googleTitle").style.transform = "translateY(0)";
-                searchContainer.style.transform = "translateY(0)";
-                searchContainer.style.zIndex = "1";
-                document.getElementById("helloText").style.opacity = "1";
-                
-                searchBg.classList.remove("active");
-                setTimeout(() => {
-                    searchBg.style.display = "none";
-                }, 300);
-                
-                searchContainer.style.boxShadow = "0px 4px 10px rgba(255, 255, 255, 0.1)";
-                
-                const wrappers = document.querySelectorAll('.wrapper');
-                wrappers.forEach(wrapper => {
-                    wrapper.style.opacity = "1";
-                    wrapper.style.transform = "translateY(0)";
-                    wrapper.style.pointerEvents = "auto";
-                });
-                
-                searchInput.blur();
-            }
-        });
-
-        function openAboutModal() {
-            const modal = document.getElementById('about-modal');
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-            document.getElementById('container').style.filter = 'blur(5px)';
+    // Close modal when clicking outside
+    document.getElementById('shortcut-modal').addEventListener('click', function(e) {
+        if (e.target === this || e.target.classList.contains('modal-backdrop')) {
+            closeModal();
         }
+    });
 
-        document.getElementById('about-modal').addEventListener('click', function(e) {
-            if (e.target === this || e.target.classList.contains('modal-backdrop')) {
-                this.classList.remove('active');
-                document.body.style.overflow = '';
-                document.getElementById('container').style.filter = 'none';
-            }
-        });
+    // Open About modal
+    function openAboutModal() {
+        const modal = document.getElementById('about-modal');
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('container').style.filter = 'blur(5px)';
+    }
 
-        function setupSuggestions() {
-            if (!document.getElementById('suggestions-container')) {
-                const suggestionsContainer = document.createElement('div');
-                suggestionsContainer.id = 'suggestions-container';
-                suggestionsContainer.className = 'suggestions-container';
-        
-                const searchContainer = document.getElementById('searchContainer');
-                searchContainer.parentNode.insertBefore(suggestionsContainer, searchContainer.nextSibling);
-            }
+    // Close About modal when clicking outside
+    document.getElementById('about-modal').addEventListener('click', function(e) {
+        if (e.target === this || e.target.classList.contains('modal-backdrop')) {
+            this.classList.remove('active');
+            document.body.style.overflow = '';
+            document.getElementById('container').style.filter = 'none';
         }
+    });
 
-        function fetchSuggestions(query) {
-            if (!query || query.trim() === '') {
-                hideSuggestions();
-                return;
-            }
-    
-            const script = document.createElement('script');
-            script.src = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(query)}&callback=handleSuggestions`;
-            document.body.appendChild(script);
-    
-            script.onload = function() {
-                document.body.removeChild(script);
-            };
-        }
+    // Show floating edit button
+    function showFloatingEditButton(category) {
+        const existingBtn = document.querySelector('.floating-edit-btn');
+        if (existingBtn) existingBtn.remove();
 
-        function handleSuggestions(data) {
-            const suggestions = data[1];
-            displaySuggestions(suggestions);
-        }
+        const editBtn = document.createElement('button');
+        editBtn.className = 'floating-edit-btn';
+        editBtn.innerHTML = `
+            <svg class="edit-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+            Edit
+        `;
 
-        function displaySuggestions(suggestions) {
-            const container = document.getElementById('suggestions-container');
-
-            if (suggestions.length === 0) {
-                hideSuggestions();
-                return;
-            }
-
-            container.innerHTML = '';
-            suggestions.forEach(suggestion => {
-                const item = document.createElement('div');
-                item.className = 'suggestion-item';
-        
-                item.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-                    </svg>
-                    ${suggestion}
-                `;
-
-                item.addEventListener('click', function() {
-                    document.getElementById('searchInput').value = suggestion;
-                    hideSuggestions();
-                    handleSearch({ key: 'Enter' });
-                });
-
-                container.appendChild(item);
-            });
-
-            container.style.display = 'block';
-            document.getElementById('searchContainer').classList.add('with-suggestions');
-
-            setTimeout(() => {
-                container.classList.add('active');
-            }, 10);
-        }
-
-        function hideSuggestions() {
-            const container = document.getElementById('suggestions-container');
-            const searchContainer = document.getElementById('searchContainer');
-    
-            if (container) {
-                container.classList.remove('active');
-                searchContainer.classList.remove('with-suggestions');
-
-                setTimeout(() => {
-                    container.style.display = 'none';
-                }, 300);
-            }
-        }
-
-        function setupSearchEvents() {
-            setupSuggestions();
-
-            const searchInput = document.getElementById('searchInput');
-
-            let debounceTimer;
-            searchInput.addEventListener('input', function() {
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(() => {
-                    fetchSuggestions(this.value);
-                }, 300);
-            });
-
-            document.addEventListener('click', function(e) {
-                const suggestionsContainer = document.getElementById('suggestions-container');
-                const searchContainer = document.getElementById('searchContainer');
-        
-                if (suggestionsContainer && 
-                    !searchContainer.contains(e.target) && 
-                    !suggestionsContainer.contains(e.target)) {
-                    hideSuggestions();
-                }
-            });
-
-            searchInput.addEventListener('keydown', function(e) {
-                const container = document.getElementById('suggestions-container');
-                if (!container || container.style.display === 'none') return;
-
-                const items = container.querySelectorAll('.suggestion-item');
-                if (items.length === 0) return;
-
-                const activeItem = container.querySelector('.suggestion-item.active');
-                let activeIndex = -1;
-
-                if (activeItem) {
-                    for (let i = 0; i < items.length; i++) {
-                        if (items[i] === activeItem) {
-                            activeIndex = i;
-                            break;
-                        }
-                    }
-                }
-
-                if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-            
-                    if (activeIndex < items.length - 1) {
-                        if (activeItem) activeItem.classList.remove('active');
-                        items[activeIndex + 1].classList.add('active');
-                        searchInput.value = items[activeIndex + 1].textContent;
-                    } else if (activeIndex === -1 && items.length > 0) {
-                        items[0].classList.add('active');
-                        searchInput.value = items[0].textContent;
-                    }
-                } else if (e.key === 'ArrowUp') {
-                            e.preventDefault();
-            
-                    if (activeIndex > 0) {
-                        if (activeItem) activeItem.classList.remove('active');
-                        items[activeIndex - 1].classList.add('active');
-                        searchInput.value = items[activeIndex - 1].textContent;
-                    } else if (activeIndex === 0) {
-                        if (activeItem) activeItem.classList.remove('active');
-                        searchInput.value = searchInput.dataset.originalValue || '';
-                    }
-                } else if (e.key === 'Escape') {
-                    hideSuggestions();
-                }
-            });
-    
-            searchInput.addEventListener('focus', function() {
-                this.dataset.originalValue = this.value;
-                if (this.value.trim() !== '') {
-                    fetchSuggestions(this.value);
-                }
-            });
-        }
-
-        window.handleSuggestions = function(data) {
-            const suggestions = data[1];
-            displaySuggestions(suggestions);
+        editBtn.onclick = function() {
+            closeModal();
+            openEditModal(category);
         };
 
-        document.addEventListener('DOMContentLoaded', setupSearchEvents);
-        setupSearchEvents();
-    
+        document.body.appendChild(editBtn);
 
-        function createShortcutElement(shortcut) {
-          const shortcutDiv = document.createElement('div');
-          shortcutDiv.className = 'shortcut';
-          
-            const displayName = shortcut.name.length > 11 
-                ? shortcut.name.substring(0, 11) + '...' 
-                : shortcut.name;
-  
-          shortcutDiv.innerHTML = `
-            <a href="${shortcut.url}">
-              <div class="icon-wrapper">
-                <img src="${shortcut.icon}" alt="${shortcut.name}" loading="lazy">
-              </div>
-              <span title="${shortcut.name}">${displayName}</span>
-            </a>
-          `;
-  
-          return shortcutDiv;
-        }
-        
-        document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-            return false;
-        }, false);
-
-        document.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey && (e.key === 's' || e.key === 'S' || e.key === 'u' || e.key === 'U')) || 
-                (e.ctrlKey && e.shiftKey && (e.key === 'i' || e.key === 'I' || e.key === 'j' || e.key === 'J')) ||
-                e.key === 'F12') {
-                e.preventDefault();
-                return false;
+        setTimeout(() => {
+            const modal = document.querySelector('.modal-content');
+            if (modal) {
+                const modalRect = modal.getBoundingClientRect();
+                editBtn.style.position = 'fixed';
+                editBtn.style.top = `${modalRect.bottom + 10}px`;
+                editBtn.style.left = `${modalRect.right - editBtn.offsetWidth - 20}px`;
+                editBtn.style.transform = 'none';
+                editBtn.classList.add('show');
             }
-        }, false);
+        }, 100);
+    }
 
-        document.addEventListener('dragstart', function(e) {
-            e.preventDefault();
-            return false;
-        }, false);
+    // Open edit shortcuts modal
+    function openEditModal(category) {
+        currentEditCategory = category;
+        const modal = document.getElementById('edit-shortcuts-modal');
+        const shortcutsList = document.getElementById('edit-shortcuts-list');
+        const container = document.getElementById(`${category}-container`);
 
-        let devToolsWarning = function() {
-            document.body.innerHTML = "This action is not allowed.";
-            setTimeout(function() {
-                location.reload();
-            }, 1500);
-        };
+        // Clone current shortcuts
+        currentShortcuts = getShortcutsFromDOM(container);
 
-        let devToolsCheck = setInterval(function() {
-            if (window.outerWidth - window.innerWidth > 160 || window.outerHeight - window.innerHeight > 160) {
-                devToolsWarning();
-                clearInterval(devToolsCheck);
-            }
-        }, 1000);
+        // Clear current list
+        shortcutsList.innerHTML = '';
 
-        document.addEventListener('visibilitychange', function() {
-            if (document.visibilityState === 'hidden') {
-            }
+        // Populate edit list
+        currentShortcuts.forEach((shortcut, index) => {
+            const shortcutItem = document.createElement('div');
+            shortcutItem.className = 'shortcut-item';
+            shortcutItem.dataset.index = index;
+            shortcutItem.innerHTML = `
+                <div class="shortcut-item-info">
+                    <div class="shortcut-item-icon">
+                        <img src="${shortcut.icon}" alt="${shortcut.name}" loading="lazy">
+                    </div>
+                    <div>
+                        <div class="shortcut-item-name">${shortcut.name}</div>
+                        <div class="shortcut-item-url">${shortcut.url}</div>
+                    </div>
+                </div>
+                <div class="shortcut-item-actions">
+                    <button class="remove-shortcut-btn" onclick="removeShortcut(${index})">Remove</button>
+                </div>
+            `;
+            shortcutsList.appendChild(shortcutItem);
         });
-        
-// Initialize Firebase
-const firebaseConfig = {
-  // Your Firebase config goes here
-  // You'll need to replace this with your actual Firebase project details
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+        // Clear form
+        document.getElementById('new-shortcut-name').value = '';
+        document.getElementById('new-shortcut-url').value = '';
 
-// Initialize Firestore
-const db = firebase.firestore();
-
-// Current category being edited
-let currentEditCategory = '';
-let currentShortcuts = {};
-
-// Create a toast notification
-function showToast(message, isError = false) {
-    let toast = document.querySelector('.toast');
-    
-    if (!toast) {
-        toast = document.createElement('div');
-        toast.className = 'toast';
-        document.body.appendChild(toast);
+        // Display modal
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('container').style.filter = 'blur(5px)';
     }
-    
-    if (isError) {
-        toast.classList.add('error');
-    } else {
-        toast.classList.remove('error');
-    }
-    
-    toast.textContent = message;
-    toast.classList.add('show');
-    
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 3000);
-}
 
-// Open edit shortcuts modal
-function openEditModal(category) {
-    currentEditCategory = category;
-    const modal = document.getElementById('edit-shortcuts-modal');
-    const shortcutsList = document.getElementById('edit-shortcuts-list');
-    const container = document.getElementById(`${category}-container`);
-    
-    // Clone current shortcuts
-    currentShortcuts = getShortcutsFromDOM(container);
-    
-    // Clear current list
-    shortcutsList.innerHTML = '';
-    
-    // Populate edit list
-    currentShortcuts.forEach((shortcut, index) => {
+    // Close edit shortcuts modal
+    function closeEditModal() {
+        const modal = document.getElementById('edit-shortcuts-modal');
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+        document.getElementById('container').style.filter = 'none';
+    }
+
+    // Get shortcuts from DOM
+    function getShortcutsFromDOM(container) {
+        const shortcuts = [];
+        const shortcutElements = container.querySelectorAll('.shortcut');
+        shortcutElements.forEach(shortcut => {
+            const link = shortcut.querySelector('a');
+            const img = shortcut.querySelector('img');
+            const span = shortcut.querySelector('span');
+            shortcuts.push({
+                name: span.title || span.textContent,
+                url: link.href,
+                icon: img.src
+            });
+        });
+        return shortcuts;
+    }
+
+    // Remove shortcut
+    function removeShortcut(index) {
+        currentShortcuts.splice(index, 1);
+        const shortcutsList = document.getElementById('edit-shortcuts-list');
+        shortcutsList.innerHTML = '';
+        currentShortcuts.forEach((shortcut, idx) => {
+            const shortcutItem = document.createElement('div');
+            shortcutItem.className = 'shortcut-item';
+            shortcutItem.dataset.index = idx;
+            shortcutItem.innerHTML = `
+                <div class="shortcut-item-info">
+                    <div class="shortcut-item-icon">
+                        <img src="${shortcut.icon}" alt="${shortcut.name}" loading="lazy">
+                    </div>
+                    <div>
+                        <div class="shortcut-item-name">${shortcut.name}</div>
+                        <div class="shortcut-item-url">${shortcut.url}</div>
+                    </div>
+                </div>
+                <div class="shortcut-item-actions">
+                    <button class="remove-shortcut-btn" onclick="removeShortcut(${idx})">Remove</button>
+                </div>
+            `;
+            shortcutsList.appendChild(shortcutItem);
+        });
+    }
+
+    // Add new shortcut
+    function addNewShortcut() {
+        const nameInput = document.getElementById('new-shortcut-name');
+        const urlInput = document.getElementById('new-shortcut-url');
+        const name = nameInput.value.trim();
+        let url = urlInput.value.trim();
+
+        if (!name || !url) {
+            showToast('Please enter both name and URL', true);
+            return;
+        }
+
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            url = 'https://' + url;
+        }
+
+        const domain = new URL(url).hostname;
+        const icon = `https://www.google.com/s2/favicons?sz=64&domain=${domain}`;
+
+        const newShortcut = { name, url, icon };
+        currentShortcuts.push(newShortcut);
+
+        const shortcutsList = document.getElementById('edit-shortcuts-list');
+        const index = currentShortcuts.length - 1;
         const shortcutItem = document.createElement('div');
         shortcutItem.className = 'shortcut-item';
         shortcutItem.dataset.index = index;
-        
         shortcutItem.innerHTML = `
             <div class="shortcut-item-info">
                 <div class="shortcut-item-icon">
-                    <img src="${shortcut.icon}" alt="${shortcut.name}" loading="lazy">
+                    <img src="${icon}" alt="${name}" loading="lazy">
                 </div>
                 <div>
-                    <div class="shortcut-item-name">${shortcut.name}</div>
-                    <div class="shortcut-item-url">${shortcut.url}</div>
+                    <div class="shortcut-item-name">${name}</div>
+                    <div class="shortcut-item-url">${url}</div>
                 </div>
             </div>
             <div class="shortcut-item-actions">
                 <button class="remove-shortcut-btn" onclick="removeShortcut(${index})">Remove</button>
             </div>
         `;
-        
         shortcutsList.appendChild(shortcutItem);
-    });
-    
-    // Clear form
-    document.getElementById('new-shortcut-name').value = '';
-    document.getElementById('new-shortcut-url').value = '';
-    
-    // Display modal
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-    document.getElementById('container').style.filter = 'blur(5px)';
-    
-    // Set up event listeners
-    document.getElementById('add-shortcut-btn').onclick = addNewShortcut;
-    document.getElementById('save-shortcuts-btn').onclick = saveShortcuts;
-    document.getElementById('cancel-edit-btn').onclick = closeEditModal;
-}
 
-// Close edit shortcuts modal
-function closeEditModal() {
-    const modal = document.getElementById('edit-shortcuts-modal');
-    modal.classList.remove('active');
-    document.body.style.overflow = '';
-    document.getElementById('container').style.filter = 'none';
-}
-
-// Get shortcuts from DOM
-function getShortcutsFromDOM(container) {
-    const shortcuts = [];
-    const shortcutElements = container.querySelectorAll('.shortcut');
-    
-    shortcutElements.forEach(shortcut => {
-        const link = shortcut.querySelector('a');
-        const img = shortcut.querySelector('img');
-        const span = shortcut.querySelector('span');
-        
-        shortcuts.push({
-            name: span.title || span.textContent,
-            url: link.href,
-            icon: img.src
-        });
-    });
-    
-    return shortcuts;
-}
-
-// Remove shortcut
-function removeShortcut(index) {
-    const shortcutItem = document.querySelector(`.shortcut-item[data-index="${index}"]`);
-    
-    if (shortcutItem) {
-        shortcutItem.style.transform = 'translateX(100px)';
-        shortcutItem.style.opacity = '0';
-        
-        setTimeout(() => {
-            currentShortcuts.splice(index, 1);
-            
-            // Re-render the list
-            const shortcutsList = document.getElementById('edit-shortcuts-list');
-            shortcutsList.innerHTML = '';
-            
-            currentShortcuts.forEach((shortcut, idx) => {
-                const shortcutItem = document.createElement('div');
-                shortcutItem.className = 'shortcut-item';
-                shortcutItem.dataset.index = idx;
-                
-                shortcutItem.innerHTML = `
-                    <div class="shortcut-item-info">
-                        <div class="shortcut-item-icon">
-                            <img src="${shortcut.icon}" alt="${shortcut.name}" loading="lazy">
-                        </div>
-                        <div>
-                            <div class="shortcut-item-name">${shortcut.name}</div>
-                            <div class="shortcut-item-url">${shortcut.url}</div>
-                        </div>
-                    </div>
-                    <div class="shortcut-item-actions">
-                        <button class="remove-shortcut-btn" onclick="removeShortcut(${idx})">Remove</button>
-                    </div>
-                `;
-                
-                shortcutsList.appendChild(shortcutItem);
-            });
-        }, 300);
-    }
-}
-
-// Add new shortcut
-function addNewShortcut() {
-    const nameInput = document.getElementById('new-shortcut-name');
-    const urlInput = document.getElementById('new-shortcut-url');
-    
-    const name = nameInput.value.trim();
-    let url = urlInput.value.trim();
-    
-if (!isValidUrl(url) && !url.match(/^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/)) {
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    url = 'https://' + url;
-    
-    // Check again with the protocol added
-    if (!isValidUrl(url)) {
-      showToast('Please enter a valid URL', true);
-      return;
-    }
-  } else {
-    showToast('Please enter a valid URL', true);
-    return;
-  }
-}
-    
-    if (!name || !url) {
-        showToast('Please enter both name and URL', true);
-        return;
-    }
-    
-    // Add protocol if missing
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'https://' + url;
-    }
-    
-    // Extract domain for favicon
-    let domain = '';
-    try {
-        domain = new URL(url).hostname;
-    } catch (e) {
-        domain = url.split('/')[0];
-    }
-    
-    const icon = `https://www.google.com/s2/favicons?sz=64&domain=${domain}`;
-    
-    const newShortcut = {
-        name,
-        url,
-        icon
-    };
-    
-    currentShortcuts.push(newShortcut);
-    
-    // Add to the list
-    const shortcutsList = document.getElementById('edit-shortcuts-list');
-    const index = currentShortcuts.length - 1;
-    
-    const shortcutItem = document.createElement('div');
-    shortcutItem.className = 'shortcut-item';
-    shortcutItem.dataset.index = index;
-    
-    shortcutItem.innerHTML = `
-        <div class="shortcut-item-info">
-            <div class="shortcut-item-icon">
-                <img src="${icon}" alt="${name}" loading="lazy">
-            </div>
-            <div>
-                <div class="shortcut-item-name">${name}</div>
-                <div class="shortcut-item-url">${url}</div>
-            </div>
-        </div>
-        <div class="shortcut-item-actions">
-            <button class="remove-shortcut-btn" onclick="removeShortcut(${index})">Remove</button>
-        </div>
-    `;
-    
-    shortcutItem.style.transform = 'translateX(50px)';
-    shortcutItem.style.opacity = '0';
-    shortcutsList.appendChild(shortcutItem);
-    
-    setTimeout(() => {
-        shortcutItem.style.transform = 'translateX(0)';
-        shortcutItem.style.opacity = '1';
-    }, 10);
-    
-    // Clear inputs
-    nameInput.value = '';
-    urlInput.value = '';
-}
-
-// Save shortcuts to Firebase
-function saveShortcuts() {
-    const saveBtn = document.getElementById('save-shortcuts-btn');
-    saveBtn.disabled = true;
-    saveBtn.classList.add('saving');
-    
-    // Get all shortcuts from all categories
-    let allShortcuts = {};
-    
-    // First, get the current state of all categories from Firebase
-    db.collection('shortcuts').doc('categories').get()
-        .then(doc => {
-            if (doc.exists) {
-                allShortcuts = doc.data();
-            }
-            
-            // Update the current category
-            allShortcuts[currentEditCategory] = currentShortcuts;
-            
-            // Save to Firebase
-            return db.collection('shortcuts').doc('categories').set(allShortcuts);
-        })
-        .then(() => {
-            // Update the DOM
-            updateShortcutsInDOM(currentEditCategory, currentShortcuts);
-            
-            // Show success toast
-            showToast('Shortcuts saved successfully!');
-            
-            // Close modal
-            closeEditModal();
-        })
-        .catch(error => {
-            console.error('Error saving shortcuts:', error);
-            showToast('Error saving shortcuts. Please try again.', true);
-        })
-        .finally(() => {
-            saveBtn.disabled = false;
-            saveBtn.classList.remove('saving');
-        });
-}
-
-// Update shortcuts in the DOM
-function updateShortcutsInDOM(category, shortcuts) {
-    const container = document.getElementById(`${category}-container`);
-    container.innerHTML = '';
-    
-    shortcuts.forEach(shortcut => {
-        const shortcutElement = createShortcutElement(shortcut);
-        container.appendChild(shortcutElement);
-    });
-}
-
-// Update loadShortcuts function to use Firebase
-function loadShortcuts() {
-    const fallbackShortcuts = {
-        "tools": [
-            {
-                "name": "GitHub",
-                "url": "https://github.com",
-                "icon": "https://www.google.com/s2/favicons?sz=64&domain=github.com"
-            }
-        ],
-        "productivity": [
-            {
-                "name": "Gmail",
-                "url": "https://mail.google.com",
-                "icon": "https://www.google.com/s2/favicons?sz=64&domain=gmail.com"
-            }
-        ],
-        "utilities": [
-            {
-                "name": "Weather",
-                "url": "https://weather.com",
-                "icon": "https://www.google.com/s2/favicons?sz=64&domain=weather.com"
-            }
-        ],
-        "social": [
-            {
-                "name": "Instagram",
-                "url": "https://instagram.com",
-                "icon": "https://www.google.com/s2/favicons?sz=64&domain=instagram.com"
-            }
-        ]
-    };
-
-    // Function to load shortcuts from fallback object
-    function loadFromFallback() {
-        console.log('Loading from hardcoded fallback shortcuts');
-        Object.keys(fallbackShortcuts).forEach(category => {
-            const container = document.getElementById(`${category}-container`);
-            if (container) {
-                container.innerHTML = '';
-                
-                fallbackShortcuts[category].forEach(shortcut => {
-                    const shortcutElement = createShortcutElement(shortcut);
-                    container.appendChild(shortcutElement);
-                });
-            }
-        });
+        nameInput.value = '';
+        urlInput.value = '';
     }
 
-    // Function to load shortcuts from JSON file
-    function loadFromJson() {
-        console.log('Attempting to load from JSON file');
-        return fetch('shortcuts.json')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Successfully loaded from JSON file');
-                
-                Object.keys(data).forEach(category => {
-                    const container = document.getElementById(`${category}-container`);
-                    if (container) {
-                        container.innerHTML = '';
-                        
-                        data[category].forEach(shortcut => {
-                            const shortcutElement = createShortcutElement(shortcut);
-                            container.appendChild(shortcutElement);
-                        });
-                    }
-                });
-                
-                return true; // Successfully loaded from JSON
+    // Save shortcuts to Firebase
+    function saveShortcuts() {
+        const saveBtn = document.getElementById('save-shortcuts-btn');
+        saveBtn.disabled = true;
+        saveBtn.classList.add('saving');
+
+        db.collection('shortcuts').doc('categories').set({ [currentEditCategory]: currentShortcuts })
+            .then(() => {
+                showToast('Shortcuts saved successfully!');
+                closeEditModal();
             })
             .catch(error => {
-                console.error('Error loading shortcuts from JSON:', error);
-                return false; // Failed to load from JSON
+                console.error('Error saving shortcuts:', error);
+                showToast('Error saving shortcuts. Please try again.', true);
+            })
+            .finally(() => {
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('saving');
             });
     }
 
-    // Try Firebase first
-    try {
-        console.log('Attempting to load from Firebase');
+    // Load shortcuts from Firebase
+    function loadShortcuts() {
         db.collection('shortcuts').doc('categories').get()
             .then(doc => {
                 if (doc.exists) {
-                    console.log('Successfully loaded from Firebase');
                     const data = doc.data();
                     Object.keys(data).forEach(category => {
                         const container = document.getElementById(`${category}-container`);
                         if (container) {
                             container.innerHTML = '';
-                            
                             data[category].forEach(shortcut => {
                                 const shortcutElement = createShortcutElement(shortcut);
                                 container.appendChild(shortcutElement);
@@ -1966,142 +1523,66 @@ function loadShortcuts() {
                         }
                     });
                 } else {
-                    console.log('No document found in Firebase, trying JSON file');
-                    // If not in Firebase, try to load from JSON file
-                    loadFromJson().then(success => {
-                        if (!success) {
-                            loadFromFallback();
-                        }
-                    });
+                    showToast('No shortcuts found. Using default shortcuts.', true);
+                    loadDefaultShortcuts();
                 }
             })
             .catch(error => {
-                console.error('Error loading from Firebase:', error);
-                // Try JSON next
-                loadFromJson().then(success => {
-                    if (!success) {
-                        loadFromFallback();
-                    }
-                });
+                console.error('Error loading shortcuts:', error);
+                showToast('Error loading shortcuts. Using default shortcuts.', true);
+                loadDefaultShortcuts();
             });
-    } catch (e) {
-        console.error('Firebase not initialized or other error:', e);
-        // Try JSON if Firebase isn't even initialized
-        loadFromJson().then(success => {
-            if (!success) {
-                loadFromFallback();
+    }
+
+    // Load default shortcuts
+    function loadDefaultShortcuts() {
+        const defaultShortcuts = {
+            "tools": [
+                { "name": "GitHub", "url": "https://github.com", "icon": "https://www.google.com/s2/favicons?sz=64&domain=github.com" }
+            ],
+            "productivity": [
+                { "name": "Gmail", "url": "https://mail.google.com", "icon": "https://www.google.com/s2/favicons?sz=64&domain=gmail.com" }
+            ],
+            "utilities": [
+                { "name": "Weather", "url": "https://weather.com", "icon": "https://www.google.com/s2/favicons?sz=64&domain=weather.com" }
+            ],
+            "social": [
+                { "name": "Instagram", "url": "https://instagram.com", "icon": "https://www.google.com/s2/favicons?sz=64&domain=instagram.com" }
+            ]
+        };
+
+        Object.keys(defaultShortcuts).forEach(category => {
+            const container = document.getElementById(`${category}-container`);
+            if (container) {
+                container.innerHTML = '';
+                defaultShortcuts[category].forEach(shortcut => {
+                    const shortcutElement = createShortcutElement(shortcut);
+                    container.appendChild(shortcutElement);
+                });
             }
         });
     }
-}
 
-// Add toast container to body
-function createToastContainer() {
-    if (!document.querySelector('.toast')) {
-        const toast = document.createElement('div');
-        toast.className = 'toast';
-        document.body.appendChild(toast);
+    // Create a shortcut element
+    function createShortcutElement(shortcut) {
+        const shortcutDiv = document.createElement('div');
+        shortcutDiv.className = 'shortcut';
+        const displayName = shortcut.name.length > 11 ? shortcut.name.substring(0, 11) + '...' : shortcut.name;
+        shortcutDiv.innerHTML = `
+            <a href="${shortcut.url}">
+                <div class="icon-wrapper">
+                    <img src="${shortcut.icon}" alt="${shortcut.name}" loading="lazy">
+                </div>
+                <span title="${shortcut.name}">${displayName}</span>
+            </a>
+        `;
+        return shortcutDiv;
     }
-}
 
-// Show floating edit button
-function showFloatingEditButton(category) {
-    // Remove any existing floating edit buttons
-    const existingBtn = document.querySelector('.floating-edit-btn');
-    if (existingBtn) {
-        existingBtn.remove();
-    }
-    
-    // Create new floating edit button
-    const editBtn = document.createElement('button');
-    editBtn.className = 'floating-edit-btn';
-    editBtn.innerHTML = `
-        <svg class="edit-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-        </svg>
-        Edit
-    `;
-    
-    editBtn.onclick = function() {
-        closeModal();
-        openEditModal(category);
-    };
-    
-    document.body.appendChild(editBtn);
-    
-    setTimeout(() => {
-        const modal = document.querySelector('.modal-content');
-        if (modal) {
-            const modalRect = modal.getBoundingClientRect();
-            
-            // Position button below the modal and align to the right
-            editBtn.style.position = 'fixed';
-            editBtn.style.top = `${modalRect.bottom + 10}px`; // 10px gap below modal
-            editBtn.style.left = `${modalRect.right - editBtn.offsetWidth - 20}px`; // Align to right with 20px margin
-            editBtn.style.transform = 'none'; // Override default transform
-            
-            editBtn.classList.add('show');
-        }
-    }, 100);
-}
-
-// Modify closeModal function to also remove the floating edit button
-function closeModal() {
-    const modal = document.getElementById('shortcut-modal');
-    modal.classList.remove('active');
-    document.body.style.overflow = '';
-    document.getElementById('container').style.filter = 'none';
-    
-    // Remove floating edit button
-    const editBtn = document.querySelector('.floating-edit-btn');
-    if (editBtn) {
-        editBtn.classList.remove('show');
-        setTimeout(() => {
-            editBtn.remove();
-        }, 300);
-    }
-}
-
-// Add validation for valid URLs
-function isValidUrl(url) {
-  try {
-    new URL(url);
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  // Firebase connection check
-  firebase.firestore().enableNetwork()
-    .then(() => {
-      console.log('Firebase connected successfully');
-      loadShortcuts(); // Load shortcuts after confirming Firebase connection
-    })
-    .catch(error => {
-      console.error('Firebase connection error:', error);
-      showToast('Could not connect to the database. Using local data instead.', true);
-      loadShortcuts(); // Load shortcuts anyway (will use fallback)
+    // Initialize Firebase and load shortcuts when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        loadShortcuts();
     });
-  
-  createToastContainer(); // Make sure toast container exists
-  
-  // Enable offline persistence for Firebase (optional but recommended)
-  firebase.firestore().enablePersistence()
-    .then(() => {
-      console.log('Offline persistence enabled');
-    })
-    .catch((err) => {
-      console.error('Error enabling offline support:', err);
-    });
-});
-    document.addEventListener('DOMContentLoaded', function() {
-        if (window.firebaseApp) {
-            console.log('Firebase initialized successfully');
-        }
-    });
-    </script>
+</script>
 </body>
 </html>
