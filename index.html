@@ -2097,6 +2097,11 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error enabling offline support:', err);
     });
 });
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.firebaseApp) {
+            console.log('Firebase initialized successfully');
+        }
+    });
     </script>
 </body>
 </html>
